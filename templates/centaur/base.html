@@ -1,0 +1,93 @@
+{% load url from future %}
+
+<html>
+<head>
+    <link href="/media/admin/css/base.css" type="text/css" rel="stylesheet">
+    <link href="/media/admin/css/dashboard.css" type="text/css" rel="stylesheet">
+    <style type="text/css">
+        body {
+            font-family: "Open Sans", sans-serif;
+        }
+
+        a {
+            text-decoration: none;
+            color: #000000;
+        }
+
+        td {
+            padding-top: 10px;
+            padding-bottom: 10px;
+        }
+
+        .error-count {
+            width: 40px;
+            height: 40px;
+            border-radius: 20px;
+            line-height: 40px;
+            text-align: center;
+            color: white;
+            font-size: 2em;
+            margin-left: 20px;
+            margin-right: 20px;
+            outline: 0;
+        }
+
+        .error-summary {
+            font-weight: bold;
+            display: block;
+        }
+
+        .error-summary small {
+            color: #CCC;
+        }
+
+        .error-module {
+            color: #CCC;
+        }
+
+        .error { background-color: #ff0000; }
+        .warning { background-color: #ff8800; }
+        .info { background-color: #87CEEB; }
+
+        #error-summary-header {
+            padding-top: 20px;
+            border-bottom: 1px solid #DDD;
+            padding-bottom: 20px;
+        }
+
+        #error-summary-header .error-count {
+            display: inline-block;
+        }
+
+        #error-summary-header .error-summary-details {
+            display: inline-block;
+        }
+
+        .request-repr {
+            font-family: monospace;
+            background-color: #DDD;
+            margin: 20px;
+            padding: 10px;
+            overflow: auto;
+        }
+
+        .section {
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+    </style>
+</head>
+
+<body class="dashboard">
+    <div id="container">
+        <div id="header">
+        <div id="branding">
+            <a href="{% url 'centaur_index' %}"><h1 id="site-name">Centaur</h1></a>
+        </div>
+        </div>
+
+        {% block content %}{% endblock %}
+    </div>
+</body>
+
+</html>
