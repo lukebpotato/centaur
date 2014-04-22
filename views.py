@@ -13,7 +13,7 @@ def error(request, error_id):
     error = get_object_or_404(Error, pk=error_id)
 
     page = request.GET.get('page', 0)
-    paginator = Paginator(error.events.order_by('-created'), 1)
+    paginator = Paginator(error.events.all().order_by("-created"), 1)
     try:
         events = paginator.page(page)
     except PageNotAnInteger:
