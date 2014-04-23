@@ -2,186 +2,193 @@
 
 <html>
 <head>
-    <title>{% block title %}{% endblock %}Centaur</title>
-    <link href="/media/admin/css/base.css" type="text/css" rel="stylesheet">
-    <link href="/media/admin/css/dashboard.css" type="text/css" rel="stylesheet">
-    <style type="text/css">
-        body {
-            font-family: "Open Sans", sans-serif;
-        }
+	<title>{% block title %}{% endblock %}Centaur</title>
+	<link href="/media/admin/css/base.css" type="text/css" rel="stylesheet">
+	<link href="/media/admin/css/dashboard.css" type="text/css" rel="stylesheet">
+	<style type="text/css">
+		body {
+			font-family: "Open Sans", sans-serif;
+		}
 
-        a {
-            text-decoration: none;
-            color: #000000;
-        }
+		a {
+			text-decoration: none;
+			color: #000000;
+		}
 
-        td {
-            padding-top: 10px;
-            padding-bottom: 10px;
-        }
+		td, th {
+			padding-top: 10px;
+			padding-bottom: 10px;
+		}
 
-        .error-count {
-            width: 40px;
-            height: 40px;
-            border-radius: 20px;
-            line-height: 40px;
-            text-align: center;
-            color: white;
-            font-size: 2em;
-            margin-left: 20px;
-            margin-right: 20px;
-            outline: 0;
-        }
+		.error-count {
+			width: 40px;
+			height: 40px;
+			border-radius: 20px;
+			line-height: 40px;
+			text-align: center;
+			color: white;
+			font-size: 2em;
+			margin-left: 20px;
+			margin-right: 20px;
+			outline: 0;
+		}
 
-        .error-summary {
-            font-weight: bold;
-            display: block;
-        }
+		.error-summary {
+			font-weight: bold;
+			display: block;
+		}
 
-        .error-summary small {
-            color: #CCC;
-        }
+		.error-summary small {
+			color: #CCC;
+		}
 
-        .error-module {
-            color: #CCC;
-        }
+		.error-module {
+			color: #CCC;
+		}
 
-        .error { background-color: #ff0000; }
-        .warning { background-color: #ff8800; }
-        .info { background-color: #87CEEB; }
+		.error { background-color: #ff0000; }
+		.warning { background-color: #ff8800; }
+		.info { background-color: #87CEEB; }
 
-        #error-summary-header {
-            padding-top: 20px;
-            border-bottom: 1px solid #DDD;
-            padding-bottom: 20px;
-        }
+		#error-summary-header {
+			padding-top: 20px;
+			border-bottom: 1px solid #DDD;
+			padding-bottom: 20px;
+		}
 
-        #error-summary-header .error-count {
-            display: inline-block;
-        }
+		#error-summary-header .error-count {
+			display: inline-block;
+		}
 
-        #error-summary-header .error-summary-details {
-            display: inline-block;
-        }
+		#error-summary-header .error-summary-details {
+			display: inline-block;
+		}
 
-        .request-repr {
-            font-family: monospace;
-            background-color: #DDD;
-            margin: 20px;
-            padding: 10px;
-            overflow: auto;
-        }
+		.request-repr {
+			font-family: monospace;
+			background-color: #DDD;
+			margin: 20px;
+			padding: 10px;
+			overflow: auto;
+		}
 
-        .section {
-            padding-left: 10px;
-            padding-right: 10px;
-        }
+		.section {
+			padding-left: 10px;
+			padding-right: 10px;
+		}
 
-        .section p {
-            margin-left: 20px;
-        }
+		.section p {
+			margin-left: 20px;
+		}
 
-        .previous {
-            float: left;
-            width: 100px;
-            padding: 5px;
-            line-height: 20px;
-            text-align: center;
-            margin: 10px;
-            color: white;
-            background-color: #DDD;
-            border: 1px solid #CCC;
-        }
+		.previous {
+			float: left;
+			width: 100px;
+			padding: 5px;
+			line-height: 20px;
+			text-align: center;
+			margin: 10px;
+			color: white;
+			background-color: #DDD;
+			border: 1px solid #CCC;
+		}
 
-        .next {
-            float: right;
-            width: 100px;
-            padding: 5px;
-            line-height: 20px;
-            text-align: center;
-            margin: 10px;
-            color: white;
-            background-color: #DDD;
-            border: 1px solid #CCC;
-        }
+		.next {
+			float: right;
+			width: 100px;
+			padding: 5px;
+			line-height: 20px;
+			text-align: center;
+			margin: 10px;
+			color: white;
+			background-color: #DDD;
+			border: 1px solid #CCC;
+		}
 
-        li { list-style: none; }
+		li { list-style: none; }
 
-        /*This is from django/views/debug.py*/
-        ul.traceback { list-style-type:none; color: #222; }
-        ul.traceback li.frame { padding-bottom:1em; color:#666; }
-        ul.traceback li.user { background-color:#e0e0e0; color:#000 }
-        div.context { padding:10px 0; overflow:hidden; }
-        div.context ol { padding-left:30px; margin:0 10px; list-style-position: inside; }
-        div.context ol li { font-family:monospace; white-space:pre; color:#777; cursor:pointer; }
-        div.context ol li pre { display:inline; }
-        div.context ol.context-line li { color:#505050; background-color:#dfdfdf; }
-        div.context ol.context-line li span { position:absolute; right:32px; }
-        .user div.context ol.context-line li { background-color:#bbb; color:#000; }
-        .user div.context ol li { color:#666; }
-        #traceback { background:#eee; }
-    </style>
+		/*This is from django/views/debug.py*/
+		ul.traceback { list-style-type:none; color: #222; }
+		ul.traceback li.frame { padding-bottom:1em; color:#666; }
+		ul.traceback li.user { background-color:#e0e0e0; color:#000 }
+		div.context { padding:10px 0; overflow:hidden; }
+		div.context ol { padding-left:30px; margin:0 10px; list-style-position: inside; }
+		div.context ol li { font-family:monospace; white-space:pre; color:#777; cursor:pointer; }
+		div.context ol li pre { display:inline; }
+		div.context ol.context-line li { color:#505050; background-color:#dfdfdf; }
+		div.context ol.context-line li span { position:absolute; right:32px; }
+		.user div.context ol.context-line li { background-color:#bbb; color:#000; }
+		.user div.context ol li { color:#666; }
+		#traceback { background:#eee; }
+	</style>
 
-    <script type="text/javascript">
-    //This is from django/views/debug.py
-    //<!--
-    function getElementsByClassName(oElm, strTagName, strClassName){
-        // Written by Jonathan Snook, http://www.snook.ca/jon; Add-ons by Robert Nyman, http://www.robertnyman.com
-        var arrElements = (strTagName == "*" && document.all)? document.all :
-        oElm.getElementsByTagName(strTagName);
-        var arrReturnElements = new Array();
-        strClassName = strClassName.replace(/\-/g, "\\-");
-        var oRegExp = new RegExp("(^|\\s)" + strClassName + "(\\s|$)");
-        var oElement;
-        for(var i=0; i<arrElements.length; i++){
-            oElement = arrElements[i];
-            if(oRegExp.test(oElement.className)){
-                arrReturnElements.push(oElement);
-            }
-        }
-        return (arrReturnElements)
-    }
-    function hideAll(elems) {
-      for (var e = 0; e < elems.length; e++) {
-        elems[e].style.display = 'none';
-      }
-    }
-    window.onload = function() {
-      hideAll(getElementsByClassName(document, 'table', 'vars'));
-      hideAll(getElementsByClassName(document, 'ol', 'pre-context'));
-      hideAll(getElementsByClassName(document, 'ol', 'post-context'));
-    }
-    function toggle() {
-      for (var i = 0; i < arguments.length; i++) {
-        var e = document.getElementById(arguments[i]);
-        if (e) {
-          e.style.display = e.style.display == 'none' ? 'block' : 'none';
-        }
-      }
-      return false;
-    }
-    function varToggle(link, id) {
-      toggle('v' + id);
-      var s = link.getElementsByTagName('span')[0];
-      var uarr = String.fromCharCode(0x25b6);
-      var darr = String.fromCharCode(0x25bc);
-      s.innerHTML = s.innerHTML == uarr ? darr : uarr;
-      return false;
-    }
-    //-->
-    </script>
+	<script type="text/javascript">
+	//This is from django/views/debug.py
+	//<!--
+	function getElementsByClassName(oElm, strTagName, strClassName){
+		"use strict";
+		// Written by Jonathan Snook, http://www.snook.ca/jon; Add-ons by Robert Nyman, http://www.robertnyman.com
+		var arrElements = (strTagName === "*" && document.all)? document.all :
+		oElm.getElementsByTagName(strTagName);
+		var arrReturnElements = [];
+		strClassName = strClassName.replace(/\-/g, "\\-");
+		var oRegExp = new RegExp("(^|\\s)" + strClassName + "(\\s|$)");
+		var oElement;
+		for(var i=0; i<arrElements.length; i++){
+			oElement = arrElements[i];
+			if(oRegExp.test(oElement.className)){
+				arrReturnElements.push(oElement);
+			}
+		}
+		return (arrReturnElements)
+	}
+
+	function hideAll(elems) {
+		"use strict";
+		for (var e = 0; e < elems.length; e++) {
+			elems[e].style.display = 'none';
+		}
+	}
+
+	window.onload = function() {
+		"use strict";
+		hideAll(getElementsByClassName(document, 'table', 'vars'));
+		hideAll(getElementsByClassName(document, 'ol', 'pre-context'));
+		hideAll(getElementsByClassName(document, 'ol', 'post-context'));
+	}
+
+	function toggle() {
+		"use strict";
+		for (var i = 0; i < arguments.length; i++) {
+			var e = document.getElementById(arguments[i]);
+			if (e) {
+				e.style.display = e.style.display === 'none' ? 'block' : 'none';
+			}
+		}
+		return false;
+	}
+
+	function varToggle(link, id) {
+		"use strict";
+		toggle('v' + id);
+		var s = link.getElementsByTagName('span')[0];
+		var uarr = String.fromCharCode(0x25b6);
+		var darr = String.fromCharCode(0x25bc);
+		s.innerHTML = s.innerHTML === uarr ? darr : uarr;
+		return false;
+	}
+	//-->
+	</script>
 </head>
 
 <body class="dashboard">
-    <div id="container">
-        <div id="header">
-        <div id="branding">
-            <a href="{% url 'centaur_index' %}"><h1 id="site-name">Centaur</h1></a>
-        </div>
-        </div>
+	<div id="container">
+		<div id="header">
+			<div id="branding"><a href="{% url 'centaur_index' %}"><h1 id="site-name">Centaur</h1></a></div>
+		</div>
 
-        {% block content %}{% endblock %}
-    </div>
+		{% block content %}{% endblock %}
+	</div>
 </body>
 
 </html>

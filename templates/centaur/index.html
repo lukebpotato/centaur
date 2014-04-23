@@ -3,19 +3,19 @@
 {% load url from future %}
 
 {% block content %}
-        <table>
-        {% for error in errors %}
-        <tr>
-            <td><div class="error-count {% if error.level %}{{error.level|lower}}{% else %}info{% endif %}">{{error.event_count}}</div></td>
-            <td>
-                <a href="{% url 'centaur_error' error_id=error.pk %}">
-                    <span class="error-summary">{{error.summary}} <small>{{error.last_event|timesince}} ago</small></span>
-                    <span class="error-module">{{error.module_path}}thing.thing</span>
-                </a>
-            </td>
-        </tr>
-        {% endfor %}
-        </table>
+		<table>
+			{% for error in errors %}
+			<tr>
+				<td><div class="error-count {% if error.level %}{{error.level|lower}}{% else %}info{% endif %}">{{error.event_count}}</div></td>
+				<td>
+					<a href="{% url 'centaur_error' error_id=error.pk %}">
+						<span class="error-summary">{{error.summary}} <small>{{error.last_event|timesince}} ago</small></span>
+						<span class="error-module">{{error.module_path}}thing.thing</span>
+					</a>
+				</td>
+			</tr>
+			{% endfor %}
+		</table>
 {% endblock %}
 
 </html>

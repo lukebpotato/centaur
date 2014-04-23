@@ -6,147 +6,151 @@
 
 {% block content %}
 <div id="error-summary-header">
-    <div class="error-count {% if error.level %}{{error.level|lower}}{% else %}info{% endif %}">{{error.event_count}}</div>
-    <div class="error-summary-details">
-        <a href="{% url 'centaur_error' error_id=error.pk %}">
-            <span class="error-summary">{{error.summary}} <small>{{error.last_event|timesince}} ago</small></span>
-            <span class="error-module">{{error.module_path}}thing.thing</span>
-        </a>
-    </div>
+	<div class="error-count {% if error.level %}{{error.level|lower}}{% else %}info{% endif %}">{{error.event_count}}</div>
+	<div class="error-summary-details">
+		<a href="{% url 'centaur_error' error_id=error.pk %}">
+			<span class="error-summary">{{error.summary}} <small>{{error.last_event|timesince}} ago</small></span>
+			<span class="error-module">{{error.module_path}}thing.thing</span>
+		</a>
+	</div>
 </div>
 
 <div>
-    <div style="clear:both;"></div>
-    {% if events.has_previous %}
-    <div class="previous">
-    <a href="{% url 'centaur_error' error_id=error.pk %}?page={{events.previous_page_number}}">Previous Event</a>
-    </div>
-    {% endif %}
+	<div style="clear:both;"></div>
+	{% if events.has_previous %}
+	<div class="previous">
+		<a href="{% url 'centaur_error' error_id=error.pk %}?page={{events.previous_page_number}}">Previous Event</a>
+	</div>
+	{% endif %}
 
-    {% if events.has_next %}
-    <div class="next">
-    <a href="{% url 'centaur_error' error_id=error.pk %}?page={{events.next_page_number}}">Next Event</a>
-    </div>
-    {% endif %}
-    </div>
+	{% if events.has_next %}
+	<div class="next">
+		<a href="{% url 'centaur_error' error_id=error.pk %}?page={{events.next_page_number}}">Next Event</a>
+	</div>
+	{% endif %}
 
-    <div style="clear:both;"></div>
+	<div style="clear:both;"></div>
 </div>
 
 
 {% for event in events %}
 {% if event.stack_info %}
 <div class="section">
-<h2> Traceback </h2>
-<div>
-  {% for frame in event.stack_info.frames %}
-    <li class="frame {{ frame.type }}">
-      <code>{{ frame.filename|escape }}</code> in <code>{{ frame.function|escape }}</code>
+	<h2>Traceback</h2>
+	<div>
+	{% for frame in event.stack_info.frames %}
+		<li class="frame {{ frame.type }}">
+			<code>{{ frame.filename|escape }}</code> in <code>{{ frame.function|escape }}</code>
 
-      {% if frame.context_line %}
-        <div class="context" id="c{{ frame.id }}">
-          {% if frame.pre_context and not is_email %}
-            <ol start="{{ frame.pre_context_lineno }}" class="pre-context" id="pre{{ frame.id }}">{% for line in frame.pre_context %}<li onclick="toggle('pre{{ frame.id }}', 'post{{ frame.id }}')"><pre>{{ line|escape }}</pre></li>{% endfor %}</ol>
-          {% endif %}
-          <ol start="{{ frame.lineno }}" class="context-line"><li onclick="toggle('pre{{ frame.id }}', 'post{{ frame.id }}')"><pre>{{ frame.context_line|escape }}</pre>{% if not is_email %} <span>...</span>{% endif %}</li></ol>
-          {% if frame.post_context and not is_email  %}
-            <ol start='{{ frame.lineno|add:"1" }}' class="post-context" id="post{{ frame.id }}">{% for line in frame.post_context %}<li onclick="toggle('pre{{ frame.id }}', 'post{{ frame.id }}')"><pre>{{ line|escape }}</pre></li>{% endfor %}</ol>
-          {% endif %}
-        </div>
-      {% endif %}
+			{% if frame.context_line %}
+			<div class="context" id="c{{ frame.id }}">
+				{% if frame.pre_context and not is_email %}
+				<ol start="{{ frame.pre_context_lineno }}" class="pre-context" id="pre{{ frame.id }}">
+					{% for line in frame.pre_context %}<li onclick="toggle('pre{{ frame.id }}', 'post{{ frame.id }}')"><pre>{{ line|escape }}</pre></li>{% endfor %}
+				</ol>
+				{% endif %}
 
-      {% if frame.vars %}
-        <div class="commands">
-            {% if is_email %}
-                <h2>Local Vars</h2>
-            {% else %}
-                <a href="#" onclick="return varToggle(this, '{{ frame.id }}')"><span>&#x25b6;</span> Local vars</a>
-            {% endif %}
-        </div>
-        <table class="vars" id="v{{ frame.id }}">
-          <tbody>
-            {% for var in frame.vars|dictsort:"0" %}
-              <tr>
-                <th>{{ var.0|force_escape }}</th>
-                <td class="code"><pre>{{ var.1|safe }}</pre></td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      {% endif %}
-    </li>
-  {% endfor %}
-</div>
+				<ol start="{{ frame.lineno }}" class="context-line">
+					<li onclick="toggle('pre{{ frame.id }}', 'post{{ frame.id }}')"><pre>{{ frame.context_line|escape }}</pre>{% if not is_email %} <span>...</span>{% endif %}</li>
+				</ol>
+
+				{% if frame.post_context and not is_email  %}
+				<ol start='{{ frame.lineno|add:"1" }}' class="post-context" id="post{{ frame.id }}">
+					{% for line in frame.post_context %}<li onclick="toggle('pre{{ frame.id }}', 'post{{ frame.id }}')"><pre>{{ line|escape }}</pre></li>{% endfor %}
+				</ol>
+				{% endif %}
+			</div>
+		  {% endif %}
+
+		  {% if frame.vars %}
+			<div class="commands">
+				{% if is_email %}
+					<h2>Local Vars</h2>
+				{% else %}
+					<a href="#" onclick="return varToggle(this, '{{ frame.id }}')"><span>&#x25b6;</span> Local vars</a>
+				{% endif %}
+			</div>
+			<table class="vars" id="v{{ frame.id }}">
+				<tbody>
+					{% for var in frame.vars|dictsort:"0" %}
+					<tr>
+						<th>{{ var.0|force_escape }}</th>
+						<td class="code"><pre>{{ var.1|safe }}</pre></td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		{% endif %}
+		</li>
+	{% endfor %}
+	</div>
 </div>
 {% endif %}
 
 <div class="section">
-<h2> Request </h2>
-<h3> GET </h3>
-{% if event.request.GET %}
-<table class="request-repr">
-{% for k, v in event.request.GET.items %}
-<tr>
-    <th>{{k}}</th>
-    <td>{{v}}</td>
-</tr>
-{% endfor %}
-{% else %}
-<p>No GET data</p>
-{% endif %}
-</table>
+	<h2>Request</h2>
+	<h3>GET</h3>
 
-<h3> POST </h3>
-{% if event.request.POST %}
-    <table class="request-repr">
-    {% for k, v in event.request.POST.items %}
-    <tr>
-        <th>{{k}}</th>
-        <td>{{v}}</td>
-    </tr>
-    {% endfor %}
-    </table>
-{% else %}
-    <p>No POST data</p>
-{% endif %}
+	{% if event.request.GET %}
+	<table class="request-repr">
+		{% for k, v in event.request.GET.items %}
+		<tr>
+			<th>{{k}}</th>
+			<td>{{v}}</td>
+		</tr>
+		{% endfor %}
+	</table>
+	{% else %}
+	<p>No GET data</p>
+	{% endif %}
 
-<h3> FILES </h3>
-{% if event.request.FILES %}
-<table class="request-repr">
-{% for k, v in event.request.FILES.items %}
-<tr>
-    <th>{{k}}</th>
-    <td>{{v}}</td>
-</tr>
-{% endfor %}
-</table>
-{% else %}
-<p>No FILES data</p>
-{% endif %}
+	<h3>POST</h3>
+	{% if event.request.POST %}
+	<table class="request-repr">
+		{% for k, v in event.request.POST.items %}
+		<tr>
+			<th>{{k}}</th>
+			<td>{{v}}</td>
+		</tr>
+		{% endfor %}
+	</table>
+	{% else %}
+	<p>No POST data</p>
+	{% endif %}
 
-<h3> META </h3>
-<table class="request-repr">
-{% for k, v in event.request.META.items %}
-<tr>
-    <th>{{k}}</th>
-    <td>{{v}}</td>
-</tr>
-{% endfor %}
-</table>
+	<h3>FILES</h3>
+	{% if event.request.FILES %}
+	<table class="request-repr">
+		{% for k, v in event.request.FILES.items %}
+		<tr>
+			<th>{{k}}</th>
+			<td>{{v}}</td>
+		</tr>
+		{% endfor %}
+	</table>
+	{% else %}
+	<p>No FILES data</p>
+	{% endif %}
 
-<h3> COOKIES </h3>
-<table class="request-repr">
-{% for k, v in event.request.COOKIES.items %}
-<tr>
-    <th>{{k}}</th>
-    <td>{{v}}</td>
-</tr>
-{% endfor %}
-</table>
+	<h3>META</h3>
+	<table class="request-repr">
+		{% for k, v in event.request.META.items %}
+		<tr>
+			<th>{{k}}</th>
+			<td>{{v}}</td>
+		</tr>
+		{% endfor %}
+	</table>
 
-
+	<h3> COOKIES </h3>
+	<table class="request-repr">
+		{% for k, v in event.request.COOKIES.items %}
+		<tr>
+			<th>{{k}}</th>
+			<td>{{v}}</td>
+		</tr>
+		{% endfor %}
+	</table>
 </div>
-
 {% endfor %}
-
 {% endblock %}
