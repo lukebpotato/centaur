@@ -37,33 +37,6 @@ class Error(models.Model):
             ('exception_class_name', 'file_path', 'line_number')
         ]
 
-def construct_request_json(request):
-    from pprint import pprint
-
-    result = {
-        "GET": {},
-        "POST": {},
-        "FILES": {},
-        "META": {},
-        "COOKIES": {}
-    }
-
-    for var in request.GET.items():
-        result["GET"][var[0]] = repr(var[1])
-
-    for var in request.POST.items():
-        result["POST"][var[0]] = repr(var[1])
-
-    for var in request.FILES.items():
-        result["FILES"][var[0]] = repr(var[1])
-
-    for var in request.COOKIES.items():
-        result["COOKIES"][var[0]] = repr(var[1])
-
-    for var in sorted(request.META.items()):
-        result["META"][var[0]] = repr(var[1])
-
-    return json.dumps(result)
 
 class Event(models.Model):
     error = models.ForeignKey(Error, related_name="events")
