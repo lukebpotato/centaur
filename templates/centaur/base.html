@@ -2,6 +2,7 @@
 
 <html>
 <head>
+    <title>{% block title %}{% endblock %}Centaur</title>
     <link href="/media/admin/css/base.css" type="text/css" rel="stylesheet">
     <link href="/media/admin/css/dashboard.css" type="text/css" rel="stylesheet">
     <style type="text/css">
@@ -103,7 +104,72 @@
             background-color: #DDD;
             border: 1px solid #CCC;
         }
+
+        li { list-style: none; }
+
+        /*This is from django/views/debug.py*/
+        ul.traceback { list-style-type:none; color: #222; }
+        ul.traceback li.frame { padding-bottom:1em; color:#666; }
+        ul.traceback li.user { background-color:#e0e0e0; color:#000 }
+        div.context { padding:10px 0; overflow:hidden; }
+        div.context ol { padding-left:30px; margin:0 10px; list-style-position: inside; }
+        div.context ol li { font-family:monospace; white-space:pre; color:#777; cursor:pointer; }
+        div.context ol li pre { display:inline; }
+        div.context ol.context-line li { color:#505050; background-color:#dfdfdf; }
+        div.context ol.context-line li span { position:absolute; right:32px; }
+        .user div.context ol.context-line li { background-color:#bbb; color:#000; }
+        .user div.context ol li { color:#666; }
+        #traceback { background:#eee; }
     </style>
+
+    <script type="text/javascript">
+    //This is from django/views/debug.py
+    //<!--
+    function getElementsByClassName(oElm, strTagName, strClassName){
+        // Written by Jonathan Snook, http://www.snook.ca/jon; Add-ons by Robert Nyman, http://www.robertnyman.com
+        var arrElements = (strTagName == "*" && document.all)? document.all :
+        oElm.getElementsByTagName(strTagName);
+        var arrReturnElements = new Array();
+        strClassName = strClassName.replace(/\-/g, "\\-");
+        var oRegExp = new RegExp("(^|\\s)" + strClassName + "(\\s|$)");
+        var oElement;
+        for(var i=0; i<arrElements.length; i++){
+            oElement = arrElements[i];
+            if(oRegExp.test(oElement.className)){
+                arrReturnElements.push(oElement);
+            }
+        }
+        return (arrReturnElements)
+    }
+    function hideAll(elems) {
+      for (var e = 0; e < elems.length; e++) {
+        elems[e].style.display = 'none';
+      }
+    }
+    window.onload = function() {
+      hideAll(getElementsByClassName(document, 'table', 'vars'));
+      hideAll(getElementsByClassName(document, 'ol', 'pre-context'));
+      hideAll(getElementsByClassName(document, 'ol', 'post-context'));
+    }
+    function toggle() {
+      for (var i = 0; i < arguments.length; i++) {
+        var e = document.getElementById(arguments[i]);
+        if (e) {
+          e.style.display = e.style.display == 'none' ? 'block' : 'none';
+        }
+      }
+      return false;
+    }
+    function varToggle(link, id) {
+      toggle('v' + id);
+      var s = link.getElementsByTagName('span')[0];
+      var uarr = String.fromCharCode(0x25b6);
+      var darr = String.fromCharCode(0x25bc);
+      s.innerHTML = s.innerHTML == uarr ? darr : uarr;
+      return false;
+    }
+    //-->
+    </script>
 </head>
 
 <body class="dashboard">

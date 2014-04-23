@@ -2,6 +2,8 @@
 
 {% load url from future %}
 
+{% block title %}{{error.summary}} - {% endblock %}
+
 {% block content %}
 <div id="error-summary-header">
     <div class="error-count {% if error.level %}{{error.level|lower}}{% else %}info{% endif %}">{{error.event_count}}</div>
@@ -37,9 +39,43 @@
 <div class="section">
 <h2> Traceback </h2>
 <div>
-{% for frame in event.stack_info.frames %}File "{{ frame.filename|escape }}" in {{ frame.function|escape }}
-{% if frame.context_line %}  {{ frame.lineno }}. {{ frame.context_line|escape }}{% endif %}
-{% endfor %}
+  {% for frame in event.stack_info.frames %}
+    <li class="frame {{ frame.type }}">
+      <code>{{ frame.filename|escape }}</code> in <code>{{ frame.function|escape }}</code>
+
+      {% if frame.context_line %}
+        <div class="context" id="c{{ frame.id }}">
+          {% if frame.pre_context and not is_email %}
+            <ol start="{{ frame.pre_context_lineno }}" class="pre-context" id="pre{{ frame.id }}">{% for line in frame.pre_context %}<li onclick="toggle('pre{{ frame.id }}', 'post{{ frame.id }}')"><pre>{{ line|escape }}</pre></li>{% endfor %}</ol>
+          {% endif %}
+          <ol start="{{ frame.lineno }}" class="context-line"><li onclick="toggle('pre{{ frame.id }}', 'post{{ frame.id }}')"><pre>{{ frame.context_line|escape }}</pre>{% if not is_email %} <span>...</span>{% endif %}</li></ol>
+          {% if frame.post_context and not is_email  %}
+            <ol start='{{ frame.lineno|add:"1" }}' class="post-context" id="post{{ frame.id }}">{% for line in frame.post_context %}<li onclick="toggle('pre{{ frame.id }}', 'post{{ frame.id }}')"><pre>{{ line|escape }}</pre></li>{% endfor %}</ol>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      {% if frame.vars %}
+        <div class="commands">
+            {% if is_email %}
+                <h2>Local Vars</h2>
+            {% else %}
+                <a href="#" onclick="return varToggle(this, '{{ frame.id }}')"><span>&#x25b6;</span> Local vars</a>
+            {% endif %}
+        </div>
+        <table class="vars" id="v{{ frame.id }}">
+          <tbody>
+            {% for var in frame.vars|dictsort:"0" %}
+              <tr>
+                <th>{{ var.0|force_escape }}</th>
+                <td class="code"><pre>{{ var.1|safe }}</pre></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
+    </li>
+  {% endfor %}
 </div>
 </div>
 {% endif %}
