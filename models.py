@@ -6,9 +6,11 @@ import logging
 
 from django.utils import timezone
 from django.db import models
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpResponse
 
 from google.appengine.ext import db
+
+from .utils import construct_request_json
 
 EVENT_LEVEL_WARNING = "WARNING"
 EVENT_LEVEL_INFO = "INFO"
