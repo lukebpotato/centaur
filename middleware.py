@@ -1,5 +1,3 @@
-from google.appengine.ext.deferred import defer
-
 from .models import Event
 
 class CentaurMiddleware(object):
