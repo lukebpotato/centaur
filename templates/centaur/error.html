@@ -1,6 +1,7 @@
 {% extends "centaur/base.html" %}
 
 {% load url from future %}
+{% load datetags %}
 
 {% block title %}{{error.summary}} - {% endblock %}
 
@@ -28,6 +29,53 @@
 		<a href="{% url 'centaur_error' error_id=error.pk %}?page={{events.next_page_number}}">Next Event</a>
 	</div>
 	{% endif %}
+
+	<div id="mychart" width="400" height="400"></div>
+
+	<script type="text/javascript">
+
+		document.addEventListener("DOMContentLoaded", function() {
+
+			var target = document.getElementById('mychart');
+		
+		    var chart1 = new Highcharts.Chart({
+
+				chart: {
+	                type: 'spline',
+	                renderTo: target,
+                    zoomType: 'x'
+	            },
+	            title: {
+	                text: "Occurance of error {% autoescape off %}{{ error.summary }}{% endautoescape %}"
+	            },
+	            xAxis: {
+	                type: 'datetime',
+	                title: {
+	                    text: 'Date'
+	                },
+	            },
+	            yAxis: {
+	                title: {
+	                    text: 'Occurances'
+	                },
+	                allowDecimals: false,
+	                floor: 0
+	            },
+		        series: [{
+	                name: "{% autoescape off %}{{ error.summary }}{% endautoescape %}",
+	                data: [{% for bin in bins %}{{ bin.1 }},{% endfor %}],
+	                pointStart: Date.UTC({{pointstart.0}}, {{pointstart.1}}, {{pointstart.2}}, {{pointstart.3}}),
+            		pointInterval: {{ pointinterval }}
+	        	}]
+
+    		});
+
+		}); 
+
+
+	</script>
+
+
 
 	<div style="clear:both;"></div>
 </div>
