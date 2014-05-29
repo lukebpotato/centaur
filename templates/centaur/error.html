@@ -29,43 +29,27 @@
     </div>
     {% endif %}
 
-    <div id="mychart" width="400" height="400"></div>
+    <div id="chart_div" width="400" height="400"></div>
 
+
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
     <script type="text/javascript">
-        document.addEventListener("DOMContentLoaded", function() {
-            var target = document.getElementById('mychart');
-            var chart1 = new Highcharts.Chart({
-                chart: {
-                    type: 'spline',
-                    renderTo: target,
-                    zoomType: 'x'
-                },
-                title: {
-                    text: "Occurance of error {% autoescape off %}{{ error.summary }}{% endautoescape %}"
-                },
-                xAxis: {
-                    type: 'datetime',
-                    title: {
-                        text: 'Date'
-                    },
-                },
-                yAxis: {
-                    title: {
-                        text: 'Occurances'
-                    },
-                    allowDecimals: false,
-                    floor: 0
-                },
-                series: [{
-                    name: "{% autoescape off %}{{ error.summary }}{% endautoescape %}",
-                    data: [{% for bin in bins %}{{ bin.1 }},{% endfor %}],
-                    pointStart: Date.UTC({{pointstart.0}}, {{pointstart.1}}, {{pointstart.2}}, {{pointstart.3}}),
-                    pointInterval: {{ pointinterval }}
-                }]
-            });
-        }); 
+      google.load("visualization", "1", {packages:["corechart"]});
+      google.setOnLoadCallback(drawChart);
+      function drawChart() {
+        var data = google.visualization.arrayToDataTable([
+          ['DateTime', 'Occurance'],
+          {% for bin in bins %}
+          ['{{ bin.0 }}',  {{ bin.1 }}],
+          {% endfor %}
+        ]);
+        var options = {
+          title: 'Occurance of errors'
+        };
+        var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+      }
     </script>
-
 
 
     <div style="clear:both;"></div>
