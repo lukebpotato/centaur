@@ -26,11 +26,11 @@ def error(request, error_id):
     ## Time magic
     series = [event.created for event in error.events.all().order_by("created")]
     timebins = {}
-    # Work out start date and end date
-    start_date = series[0].replace(minute=0, second=0, microsecond=0)
-    end_date = series[-1].replace(minute=0, second=0, microsecond=0)
     # Specify the inteval to work with
-    interval = datetime.timedelta(minutes=5)
+    interval = datetime.timedelta(hours=1)
+    # Work out start date and end date
+    start_date = series[0].replace(minute=0, second=0, microsecond=0) - interval
+    end_date = series[-1].replace(minute=0, second=0, microsecond=0) + interval
     # HighCharts intervals and starts
     pointinterval = int(interval.total_seconds() * 1000)
     pointstart = tuple([start_date.year, start_date.month - 1, start_date.day, start_date.hour - 1])
