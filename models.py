@@ -115,9 +115,10 @@ class Event(models.Model):
 
         error, created = Error.objects.get_or_create(
             exception_class_name=exception.__class__.__name__,
-            file_path=path,
+            hashed_file_path=Error.hash_for_file_path(path),
             line_number=lineno,
             defaults={
+                'file_path': path,
                 'level': level,
                 'summary': summary,
                 'exception_class_name': exception.__class__.__name__ if exception else ""
