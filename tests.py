@@ -10,5 +10,5 @@ from centaur.models import Error
 
 class ErrorTests(TestCase):
     def test_that_saving_an_error_stores_a_hashed_filename(self):
-        error = Error.objects.create(file_path="bananas")
+        error = Error.objects.create(file_path="bananas", line_number=1)
         self.assertEqual(Error.hash_for_file_path("bananas"), error.hashed_file_path)
