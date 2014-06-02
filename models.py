@@ -3,6 +3,7 @@ import traceback
 import json
 import os
 import logging
+from hashlib import md5
 
 from django.utils import timezone
 from django.db import models
@@ -25,7 +26,9 @@ EVENT_LEVEL_CHOICES = [
 class Error(models.Model):
     exception_class_name = models.CharField(max_length=255)
     summary = models.CharField(max_length=500)
-    file_path = models.CharField(max_length=500)
+    file_path = models.TextField()
+    hashed_file_path = models.CharField(max_length=32)
+
     line_number = models.PositiveIntegerField()
     is_resolved = models.BooleanField()
     event_count = models.PositiveIntegerField(default=0)
@@ -34,9 +37,16 @@ class Error(models.Model):
 
     class Meta:
         unique_together = [
-            ('exception_class_name', 'file_path', 'line_number')
+            ('exception_class_name', 'hashed_file_path', 'line_number')
         ]
 
+    @staticmethod
+    def hash_for_file_path(file_path):
+        return md5(file_path).hexdigest()
+
+    def save(self, *args, **kwargs):
+        self.hashed_file_path = Error.hash_for_file_path(self.file_path)
+        super(Error, self).save(*args, **kwargs)
 
 class Event(models.Model):
     error = models.ForeignKey(Error, related_name="events")
