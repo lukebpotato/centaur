@@ -8,15 +8,17 @@ import calendar
 from itertools import groupby
 import datetime
 
+
 def timestamp(datetime):
     """ Returns UTC timestamp, this is included in python3 but not 2"""
     return calendar.timegm(datetime.timetuple())
 
+
 @user_passes_test(lambda u: u.is_superuser)
 def index(request):
     errors = Error.objects.all().order_by("-last_event")
+    return render(request, "centaur/index.html", {"errors": errors})
 
-    return render(request, "centaur/index.html", { "errors": errors})
 
 @user_passes_test(lambda u: u.is_superuser)
 def error(request, error_id):
@@ -34,10 +36,7 @@ def error(request, error_id):
     # HighCharts intervals and starts
     pointinterval = int(interval.total_seconds() * 1000)
     pointstart = tuple([start_date.year, start_date.month - 1, start_date.day, start_date.hour - 1])
-    # Fill every interval between the start and end with 0
-    while start_date < end_date + interval: 
-        timebins[timestamp(start_date)] = 0
-        start_date += interval
+
     # Add the data to the correct intervals
     for k, g in groupby(series, lambda x: int(timestamp(x.replace(minute=0, second=0, microsecond=0)))):
         group = list(g)
@@ -55,4 +54,10 @@ def error(request, error_id):
     except EmptyPage:
         events = paginator.page(paginator.num_pages)
 
-    return render(request, "centaur/error.html", { "error": error, "events": events, "bins":bins, 'pointstart': pointstart, 'pointinterval':pointinterval})
+    return render(request, "centaur/error.html", {
+        "error": error,
+        "events": events,
+        "bins": bins,
+        'pointstart': pointstart,
+        'pointinterval':pointinterval,
+    })
