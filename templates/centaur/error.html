@@ -51,7 +51,8 @@
             height: 400,
             legend: 'none',
             pointSize: 5,
-            hAxis: {title: 'Date'},
+            hAxis: {title: 'Date', minValue: new Date({{ start_date }} * 1000),
+                    maxValue: new Date()},
             vAxis: {title: 'Occurances', minValue: 0}
           };
           chart.draw(data, options);

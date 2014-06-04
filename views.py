@@ -1,3 +1,5 @@
+from datetime import date, timedelta
+
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth.decorators import user_passes_test
@@ -59,5 +61,6 @@ def error(request, error_id):
         "events": events,
         "bins": bins,
         'pointstart': pointstart,
-        'pointinterval':pointinterval,
+        'pointinterval': pointinterval,
+        "start_date": timestamp(date.today() - timedelta(days=7)),
     })
