@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from collections import OrderedDict
 
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -28,8 +29,8 @@ def error(request, error_id):
     events = error.events.all().order_by("-created")
 
     ## Time magic
-    series = [event.created for event in error.events.all().order_by("created")]
-    timebins = {}
+    series = list(events.values_list("created", flat=True))
+    timebins = OrderedDict()
     # Specify the inteval to work with
     interval = datetime.timedelta(hours=1)
     # Work out start date and end date
