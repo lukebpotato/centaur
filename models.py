@@ -8,6 +8,7 @@ from hashlib import md5
 from django.utils import timezone
 from django.db import models
 from django.http import HttpResponse
+from django.core.cache import cache
 
 from google.appengine.ext import db
 
@@ -113,17 +114,28 @@ class Event(models.Model):
             exception = HttpResponse()
             level = EVENT_LEVEL_WARNING if response.status_code == 404 else EVENT_LEVEL_INFO
 
-        error, created = Error.objects.get_or_create(
-            exception_class_name=exception.__class__.__name__,
-            hashed_file_path=Error.hash_for_file_path(path),
-            line_number=lineno,
-            defaults={
-                'file_path': path,
-                'level': level,
-                'summary': summary,
-                'exception_class_name': exception.__class__.__name__ if exception else ""
-            }
-        )
+        exception_name = exception.__class__.__name__
+        path_hash = Error.hash_for_file_path(path)
+
+        #We try to get from the cache first because on the App Engine datastore
+        #we'll get screwed by eventual consistency otherwise
+        CACHE_KEY = "|".join([exception_name, path_hash, str(lineno)])
+        error = cache.get(CACHE_KEY)
+        if error:
+            created = False
+        else:
+            error, created = Error.objects.get_or_create(
+                exception_class_name=exception_name,
+                hashed_file_path=path_hash,
+                line_number=lineno,
+                defaults={
+                    'file_path': path,
+                    'level': level,
+                    'summary': summary,
+                    'exception_class_name': exception.__class__.__name__ if exception else ""
+                }
+            )
+            cache.set(CACHE_KEY, error)
 
         @db.transactional(xg=True)
         def txn(_error):
