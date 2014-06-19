@@ -6,10 +6,11 @@ import logging
 from hashlib import md5
 
 from django.utils import timezone
+from django.db.models import Model
 from django.db import models
 from django.http import HttpResponse
 from django.core.cache import cache
-
+from django.core.exceptions import MultipleObjectsReturned
 from google.appengine.ext import db
 
 from .utils import construct_request_json
@@ -24,7 +25,7 @@ EVENT_LEVEL_CHOICES = [
     (EVENT_LEVEL_INFO, "Info")
 ]
 
-class Error(models.Model):
+class Error(Model):
     exception_class_name = models.CharField(max_length=255)
     summary = models.CharField(max_length=500)
     file_path = models.TextField()
@@ -124,17 +125,44 @@ class Event(models.Model):
         if error:
             created = False
         else:
-            error, created = Error.objects.get_or_create(
-                exception_class_name=exception_name,
-                hashed_file_path=path_hash,
-                line_number=lineno,
-                defaults={
-                    'file_path': path,
-                    'level': level,
-                    'summary': summary,
-                    'exception_class_name': exception.__class__.__name__ if exception else ""
-                }
-            )
+            try:
+                error, created = Error.objects.get_or_create(
+                    exception_class_name=exception_name,
+                    hashed_file_path=path_hash,
+                    line_number=lineno,
+                    defaults={
+                        'file_path': path,
+                        'level': level,
+                        'summary': summary,
+                        'exception_class_name': exception.__class__.__name__ if exception else ""
+                    }
+                )
+            except MultipleObjectsReturned:
+                #FIXME: Temporary hack for App Engine If we created dupes, this de-dupes them
+                errors = Error.objects.filter(exception_class_name=exception_name, hashed_file_path=path_hash, line_number=lineno).all()
+
+                max_errors = 0
+                to_keep = None
+                to_remove = []
+                for error in errors:
+                    num_events = error.events.count()
+                    if max_errors < num_events:
+                        # Store the error with the most events
+                        to_keep = error
+                        max_errors = num_events
+                    else:
+                        #this error doesn't have the most events, so mark it for removal
+                        to_remove.append(error)
+
+                assert to_keep
+
+                logging.warning("Removing {} duplicate errors".format(len(to_remove)))
+                for error in to_remove:
+                    error.events.all().update(error=to_keep)
+                    error.delete()
+
+                error = to_keep
+
             cache.set(CACHE_KEY, error)
 
         @db.transactional(xg=True)
