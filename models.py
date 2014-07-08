@@ -169,7 +169,7 @@ class Event(models.Model):
         def txn(_error):
             _error = Error.objects.get(pk=_error.pk)
 
-            Event.objects.create(
+            event = Event.objects.create(
                 error=_error,
                 request_repr=repr(request).strip(),
                 request_method=request.method,
@@ -184,5 +184,6 @@ class Event(models.Model):
             _error.last_event = timezone.now()
             _error.event_count += 1
             _error.save()
+            return event
 
-        txn(error)
+        return txn(error)
