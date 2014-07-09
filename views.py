@@ -21,32 +21,17 @@ def index(request):
 
 
 @user_passes_test(lambda u: u.is_superuser)
-def error(request, error_id):
+def error(request, error_id, limit=200):
     error = get_object_or_404(Error, pk=error_id)
-    events = error.events.all().order_by("-created")
+    events = error.events.all().order_by("-created")[:limit]
 
-    ## Time magic
-    series = [event.created for event in error.events.all().order_by("created")]
-    timebins = {}
-    # Specify the inteval to work with
-    interval = datetime.timedelta(hours=1)
-    # Work out start date and end date
-    start_date = series[0].replace(minute=0, second=0, microsecond=0) - interval
-    end_date = series[-1].replace(minute=0, second=0, microsecond=0) + interval
-    # HighCharts intervals and starts
-    pointinterval = int(interval.total_seconds() * 1000)
-    pointstart = tuple([start_date.year, start_date.month - 1, start_date.day, start_date.hour - 1])
-
-    # Add the data to the correct intervals
-    for k, g in groupby(series, lambda x: int(timestamp(x.replace(minute=0, second=0, microsecond=0)))):
-        group = list(g)
-        timebins[k] = len(group) # The count
-    # Flatten into a list
-    bins = [(k, v) for k, v in timebins.iteritems()]
-    ## End of magic
+    series = [
+        timestamp(event.created.replace(minute=0, second=0, microsecond=0))
+        for event in events
+    ]
 
     page = request.GET.get('page', 0)
-    paginator = Paginator(events.order_by("-created"), 1)
+    paginator = Paginator(events, 1)
     try:
         events = paginator.page(page)
     except PageNotAnInteger:
@@ -57,7 +42,5 @@ def error(request, error_id):
     return render(request, "centaur/error.html", {
         "error": error,
         "events": events,
-        "bins": bins,
-        'pointstart': pointstart,
-        'pointinterval':pointinterval,
+        "series": series,
     })
