@@ -35,15 +35,34 @@
     <script type="text/javascript" src="https://www.google.com/jsapi"></script>
 
      <script type="text/javascript">
+        var series = [{% for timestamp in series %}
+            {{ timestamp }} * 1000{% if not forloop.last %},{% endif %}
+        {% endfor %}]
+        // Specify the interval to work with
+        var interval = 1000 * 60 * 60; // 1 hour
+        //  Work out start date and end date
+        var start_date = new Date(series[0] - interval);
+        var end_date = new Date(series.slice(-1)[0] + interval);
+
+        // Add the data to the correct intervals
+        var timebins = {};
+        series.forEach(function(timestamp) {
+            if (timestamp in timebins) {
+                timebins[timestamp] += 1;
+            } else {
+                timebins[timestamp] = 1;
+            }
+        });
+        var bins = [["Date", "Occurance"]];
+        Object.getOwnPropertyNames(timebins).forEach(function(timestamp) {
+            bins.push([new Date(parseInt(timestamp, 10)), timebins[timestamp]]);
+        });
+
+
        google.load("visualization", "1", {packages:["corechart"]});
        google.setOnLoadCallback(drawChart);
        function drawChart() {
-          var data = new google.visualization.arrayToDataTable([
-              ["Date", "Occurance"],
-              {% for bin in bins %}
-              [new Date({{ bin.0 }}*1000), {{ bin.1 }}]{% if not forloop.last %},{% endif %}
-              {% endfor %}
-          ]);
+          var data = new google.visualization.arrayToDataTable(bins);
 
           var chart = new google.visualization.ScatterChart(document.getElementById('chart_div'));
           var options = {
