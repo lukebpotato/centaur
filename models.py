@@ -89,8 +89,9 @@ class Event(models.Model):
             summary = "{0}: {1}".format(exception.__class__.__name__, unicode(exception))
             lineno = traceback.tb_lineno(exc_traceback)
 
-            stack = traceback.extract_stack(exc_traceback.tb_frame)
-            path = stack[0][0]
+            stack = traceback.extract_tb(exc_traceback)
+            unique_path = "|".join(line[0] for line in stack)
+            path = stack[-1][0]
 
             try:
                 reporter = ExceptionReporter(request, is_email=False, *(exc_type, exc_value, exc_traceback))
@@ -112,11 +113,15 @@ class Event(models.Model):
             summary = "{0} at {1}".format(response.status_code, request.path)
             lineno = 0
             path = "?".join([request.path, request.META.get('QUERY_STRING')])
+            unique_path = path
             exception = HttpResponse()
             level = EVENT_LEVEL_WARNING if response.status_code == 404 else EVENT_LEVEL_INFO
 
         exception_name = exception.__class__.__name__
-        path_hash = Error.hash_for_file_path(path)
+
+        # unique_path is either the full URL or the combined paths from the
+        # entire stack trace.
+        path_hash = Error.hash_for_file_path(unique_path)
 
         #We try to get from the cache first because on the App Engine datastore
         #we'll get screwed by eventual consistency otherwise
