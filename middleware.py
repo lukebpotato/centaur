@@ -3,7 +3,9 @@ from .models import Event
 class CentaurMiddleware(object):
 
     def process_response(self, request, response):
-        if response.status_code > 400 and not getattr(request, "_exception_logged", False):
+        #We log errors when the status code is greater than 400, but not 408 which is the status code
+        #used by deferred tasks when they (explicitly) retry. This isn't an error, and causes contention.
+        if response.status_code > 400 and response.status_code != 408 and not getattr(request, "_exception_logged", False):
             event = Event.log_event(request, response=response)
             request.centaur_event = event
         return response
