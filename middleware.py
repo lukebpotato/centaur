@@ -1,3 +1,5 @@
+import logging
+
 from .models import Event
 
 class CentaurMiddleware(object):
@@ -11,6 +13,10 @@ class CentaurMiddleware(object):
         return response
 
     def process_exception(self, request, exception):
-        event = Event.log_event(request, exception=exception)
-        request.centaur_event = event
-        request._exception_logged = True
+        try:
+            event = Event.log_event(request, exception=exception)
+            request.centaur_event = event
+            request._exception_logged = True
+        except:
+            logging.exception("Unable to log the error to centaur")
+            return None #Explictly return None so the standard Django behaviour continues
