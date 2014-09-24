@@ -27,7 +27,7 @@ EVENT_LEVEL_CHOICES = [
 
 class Error(Model):
     exception_class_name = models.CharField(max_length=255)
-    summary = models.CharField(max_length=500)
+    summary = models.TextField()
     file_path = models.TextField()
     hashed_file_path = models.CharField(max_length=32)
 
