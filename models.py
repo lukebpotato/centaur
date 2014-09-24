@@ -3,6 +3,7 @@ import traceback
 import json
 import os
 import logging
+import time
 from hashlib import md5
 
 from django.utils import timezone
@@ -12,6 +13,7 @@ from django.http import HttpResponse
 from django.core.cache import cache
 from django.core.exceptions import MultipleObjectsReturned
 from google.appengine.ext import db
+from google.appengine.api.datastore_errors import TransactionFailedError
 
 from .utils import construct_request_json
 
@@ -170,7 +172,7 @@ class Event(models.Model):
 
             cache.set(CACHE_KEY, error)
 
-        @db.transactional(xg=True)
+        @db.transactional(xg=True, retries=0)
         def txn(_error):
             _error = Error.objects.get(pk=_error.pk)
 
@@ -191,4 +193,12 @@ class Event(models.Model):
             _error.save()
             return event
 
-        return txn(error)
+        to_sleep = 1
+        while True:
+            try:
+                return txn(error)
+            except TransactionFailedError:
+                time.sleep(to_sleep)
+                to_sleep *= 2
+                to_sleep = min(to_sleep, 8)
+                continue
