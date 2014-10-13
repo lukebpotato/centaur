@@ -12,6 +12,7 @@ from django.db import models
 from django.http import HttpResponse
 from django.core.cache import cache
 from django.core.exceptions import MultipleObjectsReturned
+from django.utils.encoding import smart_str
 from google.appengine.ext import db
 from google.appengine.api.datastore_errors import TransactionFailedError
 
@@ -46,7 +47,7 @@ class Error(Model):
 
     @staticmethod
     def hash_for_file_path(file_path):
-        return md5(file_path).hexdigest()
+        return md5(smart_str(file_path)).hexdigest()
 
     def save(self, *args, **kwargs):
         self.hashed_file_path = Error.hash_for_file_path(self.file_path)
@@ -112,7 +113,7 @@ class Event(models.Model):
             level = EVENT_LEVEL_ERROR
 
         else:
-            summary = "{0} at {1}".format(response.status_code, request.path)
+            summary = u"{0} at {1}".format(response.status_code, request.path)
             lineno = 0
             path = "?".join([request.path, request.META.get('QUERY_STRING')])
             unique_path = path
