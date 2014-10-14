@@ -3,19 +3,27 @@
 {% load url from future %}
 
 {% block content %}
-		<table>
-			{% for error in errors %}
-			<tr>
-				<td><div class="error-count {% if error.level %}{{error.level|lower}}{% else %}info{% endif %}">{{error.event_count}}</div></td>
-				<td>
-					<a href="{% url 'centaur_error' error_id=error.pk %}">
-						<span class="error-summary">{{error.summary}} <small>{{error.last_event|timesince}} ago</small></span>
-						<span class="error-module">{{error.module_path}}</span>
-					</a>
-				</td>
-			</tr>
-			{% endfor %}
-		</table>
+
+<div class="search-user">
+    <form method="GET">
+        <input type="text" name="user" />
+        <input type="submit" value="Search by email">
+    </form>
+</div>
+
+<table>
+	{% for error in errors %}
+	<tr>
+		<td><div class="error-count {% if error.event_count > 100 %}error-count-small{% endif %} {% if error.level %}{{error.level|lower}}{% else %}info{% endif %}">{{error.event_count}}</div></td>
+		<td>
+			<a href="{% url 'centaur_error' error_id=error.pk %}">
+				<span class="error-summary">{{error.summary}} <small>{{error.last_event|timesince}} ago</small></span>
+				<span class="error-module">{{error.module_path}}</span>
+			</a>
+		</td>
+	</tr>
+	{% endfor %}
+</table>
 {% endblock %}
 
 </html>

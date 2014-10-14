@@ -4,7 +4,9 @@
 
 {% block title %}{{error.summary}} - {% endblock %}
 
+
 {% block content %}
+
 <div id="error-summary-header">
     <div class="error-count {% if error.level %}{{error.level|lower}}{% else %}info{% endif %}">{{error.event_count}}</div>
     <div class="error-summary-details">
@@ -81,6 +83,14 @@
 
 
 {% for event in events %}
+
+<div class="section">
+    <h2>User</h2>
+    <div>
+        <a href="{% url 'centaur_index' %}?user={{event.logged_in_user_email}}">{{event.logged_in_user_email}}</a>
+    </div>
+</div>
+
 {% if event.stack_info %}
 <div class="section">
     <h2>Traceback</h2>

@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth.decorators import user_passes_test
 
-from .models import Error
+from .models import Error, Event
 
 import calendar
 from itertools import groupby
@@ -16,7 +16,16 @@ def timestamp(datetime):
 
 @user_passes_test(lambda u: u.is_superuser)
 def index(request):
-    errors = Error.objects.all().order_by("-last_event")
+
+    errors = Error.objects.all()
+
+    # Filter by user email
+    if request.GET.get('user', None):
+        errors_pks = [e.error.pk for e in Event.objects.filter(logged_in_user_email=request.GET.get('user'))]
+        errors = errors.filter(pk__in=errors_pks)
+
+    errors = errors.order_by("-last_event")
+
     return render(request, "centaur/index.html", {"errors": errors})
 
 
