@@ -10,13 +10,12 @@
     <div class="error-summary-details">
         <a href="{% url 'centaur_error' error_id=error.pk %}">
             <span class="error-summary">{{error.summary}} <small>{{error.last_event|timesince}} ago</small></span>
-            <span class="error-module">{{error.module_path}}thing.thing</span>
+            <span class="error-module">{{error.module_path}}</span>
         </a>
     </div>
 </div>
 
 <div>
-    <div style="clear:both;"></div>
     {% if events.has_previous %}
     <div class="previous">
         <a href="{% url 'centaur_error' error_id=error.pk %}?page={{events.previous_page_number}}">Previous Event</a>
@@ -28,7 +27,7 @@
         <a href="{% url 'centaur_error' error_id=error.pk %}?page={{events.next_page_number}}">Next Event</a>
     </div>
     {% endif %}
-
+    <div style="clear:both;"></div>
     <div id="chart_div"></div>
 
 
@@ -66,7 +65,7 @@
 
           var chart = new google.visualization.ScatterChart(document.getElementById('chart_div'));
           var options = {
-            // width: 100%, 
+            // width: 100%,
             height: 400,
             legend: 'none',
             pointSize: 5,

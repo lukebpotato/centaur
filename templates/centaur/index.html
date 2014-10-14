@@ -10,7 +10,7 @@
 				<td>
 					<a href="{% url 'centaur_error' error_id=error.pk %}">
 						<span class="error-summary">{{error.summary}} <small>{{error.last_event|timesince}} ago</small></span>
-						<span class="error-module">{{error.module_path}}thing.thing</span>
+						<span class="error-module">{{error.module_path}}</span>
 					</a>
 				</td>
 			</tr>
