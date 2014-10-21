@@ -44,3 +44,20 @@ def error(request, error_id, limit=200):
         "events": events,
         "series": series,
     })
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def clear_old_events(request):
+    _clear_old_events()
+
+
+def _clear_old_events():
+    pass
+    # 1 chainability
+    #event. created
+
+    # delete batch of events
+
+    # collect number of events per error
+
+    #defer transactions to adjust number of events.
