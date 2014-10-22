@@ -75,11 +75,12 @@ def _update_error_count(error_id, events_removed):
 
 
 def _clear_old_events():
-    from google.appengine.api.datastore import Query, Delete
+    from google.appengine.api.datastore import Query, Delete, Get
 
-    query = Query("centaur_event")
+    query = Query("centaur_event", keys_only=True)
     query["created <= "] = timezone.now() - timedelta(days=30)
-    old_events = list(query.Run(limit=EVENT_BATCH_SIZE))
+    old_event_keys = list(query.Run(limit=EVENT_BATCH_SIZE))
+    old_events = filter(None, Get(old_event_keys))
 
     errors = {}
     for event in old_events:
@@ -96,6 +97,6 @@ def _clear_old_events():
 
     Delete(to_delete)
 
-    if len(old_events) == EVENT_BATCH_SIZE or len(to_delete) < len(old_events):
+    if len(old_event_keys) == EVENT_BATCH_SIZE or len(to_delete) < len(old_events):
         # In case we didn't clear everything, run again to find more old events.
         deferred.defer(_clear_old_events, _queue=CLEANUP_QUEUE)
