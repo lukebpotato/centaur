@@ -126,10 +126,13 @@ class ErrorTests(TestCase):
                 mock_now.return_value = basedate - timedelta(days=27+i+1)
                 Event.objects.create(error=e2)
 
-        _clear_old_events()
+        def mock_defer(f, *a, **kw):
+            f(*a, **kw)
+        with mock.patch('centaur.views.defer', new=mock_defer):
+            _clear_old_events()
         self.assertEqual(5, Event.objects.all().count())
-        e1 = self.reload(e1)
-        e2 = self.reload(e2)
+        e1 = Error.objects.get(pk=e1.pk)
+        e2 = Error.objects.get(pk=e2.pk)
         self.assertEqual(3, e1.event_count)
         self.assertEqual(2, e2.event_count)
 
