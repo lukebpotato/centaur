@@ -127,6 +127,7 @@ class ErrorTests(TestCase):
                 Event.objects.create(error=e2)
 
         def mock_defer(f, *a, **kw):
+            kw.pop('_queue', None)
             f(*a, **kw)
         with mock.patch('centaur.views.defer', new=mock_defer):
             _clear_old_events()

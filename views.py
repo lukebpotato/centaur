@@ -1,6 +1,9 @@
 from datetime import timedelta
+
+from django.conf import settings
 from django.utils import timezone
 from django.shortcuts import render, get_object_or_404
+from django.http import HttpResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth.decorators import user_passes_test
 
@@ -51,9 +54,12 @@ def error(request, error_id, limit=200):
     })
 
 
+CLEANUP_QUEUE = getattr(settings, 'QUEUE_FOR_EVENT_CLEANUP', 'default')
+
 @user_passes_test(lambda u: u.is_superuser)
 def clear_old_events(request):
-    defer(_clear_old_events)
+    defer(_clear_old_events, _queue=CLEANUP_QUEUE)
+    return HttpResponse("OK. Cleaning task deferred.")
 
 
 EVENT_BATCH_SIZE = 400
@@ -85,11 +91,11 @@ def _clear_old_events():
     for error_id, data in errors.items()[:ERROR_UPDATE_BATCH_SIZE]:
         # Each event might be for a different error and while we can delete hundreds of events, we
         # probably don't want to defer hundreds of tasks, so we'll only delete events from a handful of distinct events.
-        defer(_update_error_count, error_id, data['count'])
+        defer(_update_error_count, error_id, data['count'], _queue=CLEANUP_QUEUE)
         to_delete.extend(data['event_keys'])
 
     Delete(to_delete)
 
     if len(old_events) == EVENT_BATCH_SIZE or len(to_delete) < len(old_events):
         # In case we didn't clear everything, run again to find more old events.
-        deferred.defer(_clear_old_events)
+        deferred.defer(_clear_old_events, _queue=CLEANUP_QUEUE)
