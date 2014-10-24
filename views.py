@@ -13,8 +13,6 @@ from google.appengine.ext.deferred import defer
 from .models import Error
 
 import calendar
-from itertools import groupby
-import datetime
 
 
 def timestamp(datetime):
