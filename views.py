@@ -1,12 +1,18 @@
+from datetime import timedelta
+
+from django.conf import settings
+from django.utils import timezone
 from django.shortcuts import render, get_object_or_404
+from django.http import HttpResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth.decorators import user_passes_test
+
+from google.appengine.ext import db
+from google.appengine.ext.deferred import defer
 
 from .models import Error
 
 import calendar
-from itertools import groupby
-import datetime
 
 
 def timestamp(datetime):
@@ -44,3 +50,51 @@ def error(request, error_id, limit=200):
         "events": events,
         "series": series,
     })
+
+
+CLEANUP_QUEUE = getattr(settings, 'QUEUE_FOR_EVENT_CLEANUP', 'default')
+
+@user_passes_test(lambda u: u.is_superuser)
+def clear_old_events(request):
+    defer(_clear_old_events, _queue=CLEANUP_QUEUE)
+    return HttpResponse("OK. Cleaning task deferred.")
+
+
+EVENT_BATCH_SIZE = 400
+ERROR_UPDATE_BATCH_SIZE = 50
+
+def _update_error_count(error_id, events_removed):
+    @db.transactional(xg=True)
+    def txn():
+        _error = Error.objects.get(pk=error_id)
+        _error.event_count -= events_removed
+        _error.save()
+    txn()
+
+
+def _clear_old_events():
+    from google.appengine.api.datastore import Query, Delete, Get
+
+    query = Query("centaur_event", keys_only=True)
+    query["created <= "] = timezone.now() - timedelta(days=30)
+    old_event_keys = list(query.Run(limit=EVENT_BATCH_SIZE))
+    old_events = filter(None, Get(old_event_keys))
+
+    errors = {}
+    for event in old_events:
+        data = errors.setdefault(event['error_id'], {'count': 0, 'event_keys':[]})
+        data['count'] += 1
+        data['event_keys'].append(event.key())
+
+    to_delete = []
+    for error_id, data in errors.items()[:ERROR_UPDATE_BATCH_SIZE]:
+        # Each event might be for a different error and while we can delete hundreds of events, we
+        # probably don't want to defer hundreds of tasks, so we'll only delete events from a handful of distinct events.
+        defer(_update_error_count, error_id, data['count'], _queue=CLEANUP_QUEUE)
+        to_delete.extend(data['event_keys'])
+
+    Delete(to_delete)
+
+    if len(old_event_keys) == EVENT_BATCH_SIZE or len(to_delete) < len(old_events):
+        # In case we didn't clear everything, run again to find more old events.
+        defer(_clear_old_events, _queue=CLEANUP_QUEUE)

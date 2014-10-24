@@ -6,6 +6,8 @@ Replace this with more appropriate tests for your application.
 """
 
 import mock
+from datetime import timedelta
+from django.utils import timezone
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.core.cache import cache
@@ -106,3 +108,34 @@ class ErrorTests(TestCase):
 
         self.assertEqual(1, Error.objects.count())
         self.assertEqual(3, Event.objects.count())
+
+    def test_cleanup_task(self):
+        from .views import _clear_old_events
+
+        basedate = timezone.now()
+
+        with mock.patch('django.db.models.fields.timezone.now') as mock_now:
+            mock_now.return_value = basedate - timedelta(days=20)
+
+            e1 = Error.objects.create(exception_class_name='TestException1', line_number=1, event_count=5)
+            e2 = Error.objects.create(exception_class_name='TestException2', line_number=1, event_count=5)
+
+            for i in range(5):
+                mock_now.return_value = basedate - timedelta(days=27+i)
+                Event.objects.create(error=e1)
+                mock_now.return_value = basedate - timedelta(days=27+i+1)
+                Event.objects.create(error=e2)
+
+        def mock_defer(f, *a, **kw):
+            kw.pop('_queue', None)
+            f(*a, **kw)
+        with mock.patch('centaur.views.defer', new=mock_defer):
+            _clear_old_events()
+        self.assertEqual(5, Event.objects.all().count())
+        e1 = Error.objects.get(pk=e1.pk)
+        e2 = Error.objects.get(pk=e2.pk)
+        self.assertEqual(3, e1.event_count)
+        self.assertEqual(2, e2.event_count)
+
+
+
