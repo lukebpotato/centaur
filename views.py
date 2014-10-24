@@ -97,4 +97,4 @@ def _clear_old_events():
 
     if len(old_event_keys) == EVENT_BATCH_SIZE or len(to_delete) < len(old_events):
         # In case we didn't clear everything, run again to find more old events.
-        deferred.defer(_clear_old_events, _queue=CLEANUP_QUEUE)
+        defer(_clear_old_events, _queue=CLEANUP_QUEUE)
