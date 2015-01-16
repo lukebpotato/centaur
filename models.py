@@ -35,7 +35,7 @@ class Error(Model):
     hashed_file_path = models.CharField(max_length=32)
 
     line_number = models.PositiveIntegerField()
-    is_resolved = models.BooleanField()
+    is_resolved = models.BooleanField(default=False)
     event_count = models.PositiveIntegerField(default=0)
     last_event = models.DateTimeField(auto_now_add=True)
     level = models.CharField(max_length=100, choices=EVENT_LEVEL_CHOICES, default=EVENT_LEVEL_ERROR)
