@@ -10,12 +10,11 @@ from datetime import timedelta
 from django.utils import timezone
 from django.test import TestCase
 from django.test.client import RequestFactory
-from django.core.cache import cache
 
 from centaur.models import Error, Event
 from centaur.middleware import CentaurMiddleware
 
-from google.appengine.api.datastore_errors import TransactionFailedError
+from djangae.db.transaction import TransactionFailedError
 
 class ErrorTests(TestCase):
     def test_that_saving_an_error_stores_a_hashed_filename(self):
@@ -81,34 +80,6 @@ class ErrorTests(TestCase):
         finally:
             Event.objects.create = original_func
 
-    def test_that_errors_are_deduped(self):
-        middleware = CentaurMiddleware()
-
-        try:
-            raise TypeError() #Generate an exception with a traceback - genius eh?
-        except TypeError, e:
-            exception = e
-
-        request = RequestFactory().get("/")
-        middleware.process_exception(request, exception)
-
-        def side_effect(**kwargs):
-            default = kwargs.pop("defaults", {})
-            kwargs.update(default)
-            return Error.objects.create(**kwargs), True
-
-        with mock.patch('centaur.models.cache.get') as cache_get:
-            cache_get.return_value = None
-            with mock.patch('centaur.models.Error.objects.get_or_create', side_effect=side_effect) as get_patch:
-                middleware.process_exception(request, exception)
-                self.assertTrue(get_patch.called)
-                self.assertEqual(2, Error.objects.count())
-
-            middleware.process_exception(request, exception)
-
-        self.assertEqual(1, Error.objects.count())
-        self.assertEqual(3, Event.objects.count())
-
     def test_cleanup_task(self):
         from .views import _clear_old_events
 
@@ -136,6 +107,3 @@ class ErrorTests(TestCase):
         e2 = Error.objects.get(pk=e2.pk)
         self.assertEqual(3, e1.event_count)
         self.assertEqual(2, e2.event_count)
-
-
-

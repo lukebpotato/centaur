@@ -13,8 +13,8 @@ from django.http import HttpResponse
 from django.core.cache import cache
 from django.core.exceptions import MultipleObjectsReturned
 from django.utils.encoding import smart_str
-from google.appengine.ext import db
-from google.appengine.api.datastore_errors import TransactionFailedError
+
+from djangae.db.transaction import atomic, TransactionFailedError
 
 from .utils import construct_request_json
 
@@ -133,47 +133,21 @@ class Event(models.Model):
         if error:
             created = False
         else:
-            try:
-                error, created = Error.objects.get_or_create(
-                    exception_class_name=exception_name,
-                    hashed_file_path=path_hash,
-                    line_number=lineno,
-                    defaults={
-                        'file_path': path,
-                        'level': level,
-                        'summary': summary,
-                        'exception_class_name': exception.__class__.__name__ if exception else ""
-                    }
-                )
-            except MultipleObjectsReturned:
-                #FIXME: Temporary hack for App Engine If we created dupes, this de-dupes them
-                errors = Error.objects.filter(exception_class_name=exception_name, hashed_file_path=path_hash, line_number=lineno).all()
-
-                max_errors = 0
-                to_keep = None
-                to_remove = []
-                for error in errors:
-                    num_events = error.events.count()
-                    if max_errors < num_events:
-                        # Store the error with the most events
-                        to_keep = error
-                        max_errors = num_events
-                    else:
-                        #this error doesn't have the most events, so mark it for removal
-                        to_remove.append(error)
-
-                assert to_keep
-
-                logging.warning("Removing {} duplicate errors".format(len(to_remove)))
-                for error in to_remove:
-                    error.events.all().update(error=to_keep)
-                    error.delete()
-
-                error = to_keep
+            error, created = Error.objects.get_or_create(
+                exception_class_name=exception_name,
+                hashed_file_path=path_hash,
+                line_number=lineno,
+                defaults={
+                    'file_path': path,
+                    'level': level,
+                    'summary': summary,
+                    'exception_class_name': exception.__class__.__name__ if exception else ""
+                }
+            )
 
             cache.set(CACHE_KEY, error)
 
-        @db.transactional(xg=True, retries=0)
+        @atomic(xg=True)
         def txn(_error):
             _error = Error.objects.get(pk=_error.pk)
 
