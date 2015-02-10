@@ -7,11 +7,9 @@ import time
 from hashlib import md5
 
 from django.utils import timezone
-from django.db.models import Model
 from django.db import models
 from django.http import HttpResponse
 from django.core.cache import cache
-from django.core.exceptions import MultipleObjectsReturned
 from django.utils.encoding import smart_str
 
 from djangae.db.transaction import atomic, TransactionFailedError
@@ -28,7 +26,7 @@ EVENT_LEVEL_CHOICES = [
     (EVENT_LEVEL_INFO, "Info")
 ]
 
-class Error(Model):
+class Error(models.Model):
     exception_class_name = models.CharField(max_length=255)
     summary = models.TextField()
     file_path = models.TextField()
@@ -49,9 +47,6 @@ class Error(Model):
     def hash_for_file_path(file_path):
         return md5(smart_str(file_path)).hexdigest()
 
-    def save(self, *args, **kwargs):
-        self.hashed_file_path = Error.hash_for_file_path(self.file_path)
-        super(Error, self).save(*args, **kwargs)
 
 class Event(models.Model):
     error = models.ForeignKey(Error, related_name="events")
@@ -140,8 +135,7 @@ class Event(models.Model):
                 defaults={
                     'file_path': path,
                     'level': level,
-                    'summary': summary,
-                    'exception_class_name': exception.__class__.__name__ if exception else ""
+                    'summary': summary
                 }
             )
 
