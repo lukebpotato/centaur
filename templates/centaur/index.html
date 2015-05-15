@@ -10,7 +10,18 @@
         <input type="submit" value="Search by email">
     </form>
 </div>
+    {% if errors.has_previous %}
+    <div class="previous">
+        <a href="{% url 'centaur_index' %}?page={{errors.previous_page_number}}">Previous Errors</a>
+    </div>
+    {% endif %}
 
+    {% if errors.has_next %}
+    <div class="next">
+        <a href="{% url 'centaur_index' %}?page={{errors.next_page_number}}">Next Errors</a>
+    </div>
+    {% endif %}
+    <div style="clear:both;"></div>
 <table>
 	{% for error in errors %}
 	<tr>

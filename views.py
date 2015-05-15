@@ -7,6 +7,7 @@ from django.http import HttpResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth.decorators import user_passes_test
 
+
 from google.appengine.ext import db
 from google.appengine.ext.deferred import defer
 
@@ -32,6 +33,15 @@ def index(request):
 
     errors = errors.order_by("-last_event")
 
+    page = request.GET.get('page', 1)
+    paginator = Paginator(errors, 20)
+    try:
+        errors = paginator.page(page)
+    except PageNotAnInteger:
+        errors = paginator.page(1)
+    except EmptyPage:
+        errors = paginator.page(paginator.num_pages)
+
     return render(request, "centaur/index.html", {"errors": errors})
 
 
@@ -45,7 +55,7 @@ def error(request, error_id, limit=200):
         for event in events
     ]
 
-    page = request.GET.get('page', 0)
+    page = request.GET.get('page', 1)
     paginator = Paginator(events, 1)
     try:
         events = paginator.page(page)
