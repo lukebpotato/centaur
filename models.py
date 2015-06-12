@@ -46,6 +46,10 @@ class Error(models.Model):
     def hash_for_file_path(file_path):
         return md5(smart_str(file_path)).hexdigest()
 
+    def save(self, *args, **kwargs):
+        self.hashed_file_path = Error.hash_for_file_path(self.file_path)
+        super(Error, self).save(*args, **kwargs)
+
 
 class Event(models.Model):
     error = models.ForeignKey(Error, related_name="events")

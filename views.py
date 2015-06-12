@@ -6,6 +6,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth.decorators import user_passes_test
+from django.utils.importlib import import_module
 
 from google.appengine.ext import db
 from google.appengine.ext.deferred import defer
@@ -15,12 +16,21 @@ from .models import Error, Event
 import calendar
 
 
+def get_permission_decorator():
+    if getattr(settings, 'CENTAUR_PERMISSION_DECORATOR', None):
+        module, decorator = settings.CENTAUR_PERMISSION_DECORATOR.rsplit('.', 1)
+        return getattr(import_module(module), decorator)
+    return user_passes_test(lambda u: u.is_superuser)
+
+permission_decorator = get_permission_decorator()
+
+
 def timestamp(datetime):
     """ Returns UTC timestamp, this is included in python3 but not 2"""
     return calendar.timegm(datetime.timetuple())
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@permission_decorator
 def index(request):
 
     errors = Error.objects.all()
@@ -35,7 +45,7 @@ def index(request):
     return render(request, "centaur/index.html", {"errors": errors})
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@permission_decorator
 def error(request, error_id, limit=200):
     error = get_object_or_404(Error, pk=error_id)
     events = error.events.all().order_by("-created")[:limit]
@@ -63,7 +73,7 @@ def error(request, error_id, limit=200):
 
 CLEANUP_QUEUE = getattr(settings, 'QUEUE_FOR_EVENT_CLEANUP', 'default')
 
-@user_passes_test(lambda u: u.is_superuser)
+@permission_decorator
 def clear_old_events(request):
     defer(_clear_old_events, _queue=CLEANUP_QUEUE)
     return HttpResponse("OK. Cleaning task deferred.")

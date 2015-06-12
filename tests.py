@@ -13,8 +13,12 @@ from django.utils import timezone
 from djangae.test import TestCase, inconsistent_db
 from djangae.db.caching import disable_cache
 from django.test.client import RequestFactory
+from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.models import User
+
 from centaur.models import Error, Event
 from centaur.middleware import CentaurMiddleware
+from centaur.views import get_permission_decorator
 
 from djangae.db.transaction import TransactionFailedError
 
@@ -104,7 +108,6 @@ class ErrorTests(TestCase):
         self.assertEqual(3, e1.event_count)
         self.assertEqual(2, e2.event_count)
 
-
     def test_that_blacklisted_cookies_arent_stored(self):
         middleware = CentaurMiddleware()
 
@@ -125,3 +128,16 @@ class ErrorTests(TestCase):
 
         self.assertTrue("bananas" in data["COOKIES"])
         self.assertFalse("sessionid" in data["COOKIES"])
+
+
+custom_decorator = user_passes_test(lambda u: u.email.endswith('@example.com'))
+
+
+class ViewsTests(TestCase):
+
+    def test_custom_permission_decorator(self):
+        with self.settings(CENTAUR_PERMISSION_DECORATOR='centaur.tests.custom_decorator'):
+            self.assertEqual(get_permission_decorator(), custom_decorator)
+
+        self.assertNotEqual(get_permission_decorator(), custom_decorator)
+
