@@ -13,7 +13,7 @@ from django.utils import timezone
 from djangae.test import TestCase, inconsistent_db
 from djangae.db.caching import disable_cache
 from django.test.client import RequestFactory
-from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth import decorators as auth_decorators
 from django.contrib.auth.models import User
 
 from centaur.models import Error, Event
@@ -130,7 +130,7 @@ class ErrorTests(TestCase):
         self.assertFalse("sessionid" in data["COOKIES"])
 
 
-custom_decorator = user_passes_test(lambda u: u.email.endswith('@example.com'))
+custom_decorator = auth_decorators.user_passes_test(lambda u: u.email.endswith('@example.com'))
 
 
 class ViewsTests(TestCase):
