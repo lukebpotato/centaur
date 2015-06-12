@@ -6,6 +6,8 @@ Replace this with more appropriate tests for your application.
 """
 
 import mock
+import json
+
 from datetime import timedelta
 from django.utils import timezone
 from django.test import TestCase
@@ -107,3 +109,25 @@ class ErrorTests(TestCase):
         e2 = Error.objects.get(pk=e2.pk)
         self.assertEqual(3, e1.event_count)
         self.assertEqual(2, e2.event_count)
+
+
+    def test_that_blacklisted_cookies_arent_stored(self):
+        middleware = CentaurMiddleware()
+
+        request = RequestFactory().get("/")
+        request.COOKIES["sessionid"] = "12345"
+        request.COOKIES["bananas"] = "yummy"
+
+        try:
+            raise TypeError() #Generate an exception with a traceback
+        except TypeError, e:
+            exception = e
+
+        middleware.process_exception(request, exception)
+
+        event = Event.objects.get()
+
+        data = json.loads(event.request_json)
+
+        self.assertTrue("bananas" in data["COOKIES"])
+        self.assertFalse("sessionid" in data["COOKIES"])
