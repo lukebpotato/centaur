@@ -19,9 +19,6 @@ from centaur.middleware import CentaurMiddleware
 from djangae.db.transaction import TransactionFailedError
 
 class ErrorTests(TestCase):
-    def test_that_saving_an_error_stores_a_hashed_filename(self):
-        error = Error.objects.create(file_path="bananas", line_number=1)
-        self.assertEqual(Error.hash_for_file_path("bananas"), error.hashed_file_path)
 
     def test_that_errors_are_cached(self):
         middleware = CentaurMiddleware()
