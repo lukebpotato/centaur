@@ -10,9 +10,9 @@ import json
 
 from datetime import timedelta
 from django.utils import timezone
-from django.test import TestCase
+from djangae.test import TestCase, inconsistent_db
+from djangae.db.caching import disable_cache
 from django.test.client import RequestFactory
-
 from centaur.models import Error, Event
 from centaur.middleware import CentaurMiddleware
 
@@ -20,27 +20,24 @@ from djangae.db.transaction import TransactionFailedError
 
 class ErrorTests(TestCase):
 
-    def test_that_errors_are_cached(self):
+    def test_errors_are_hrd_safe(self):
         middleware = CentaurMiddleware()
-
         request = RequestFactory().get("/")
 
         try:
-            raise TypeError() #Generate an exception with a traceback - genius eh?
+            raise TypeError() #Generate an exception with a traceback
         except TypeError, e:
             exception = e
 
-        self.assertFalse(Error.objects.exists())
-
-        self.assertEqual(0, Event.objects.count())
-        middleware.process_exception(request, exception)
-        self.assertTrue(Error.objects.exists())
-        self.assertEqual(1, Event.objects.count())
-
-        with mock.patch('centaur.models.Error.objects.get_or_create') as get_patch:
+        # Process the same exception 3 times while inconsistent
+        with inconsistent_db():
             middleware.process_exception(request, exception)
-            self.assertFalse(get_patch.called)
-            self.assertEqual(2, Event.objects.count())
+            with disable_cache():
+                middleware.process_exception(request, exception)
+                middleware.process_exception(request, exception)
+
+        self.assertEqual(1, Error.objects.count())
+        self.assertEqual(3, Event.objects.count())
 
 
     def test_transactions_are_retried(self):
