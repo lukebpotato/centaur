@@ -4,9 +4,10 @@ from django.conf import settings
 from django.utils import timezone
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth.decorators import user_passes_test
 from django.utils.importlib import import_module
+from djangae.core.paginator import EmptyPage, PageNotAnInteger
+from djangae.core.paginator import DatastorePaginator as Paginator
 
 
 from google.appengine.ext import db
