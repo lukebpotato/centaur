@@ -9,7 +9,6 @@ from hashlib import md5
 from django.utils import timezone
 from django.db import models
 from django.http import HttpResponse
-from django.core.cache import cache
 from django.utils.encoding import smart_str
 
 from djangae.db.transaction import atomic, TransactionFailedError
@@ -46,6 +45,10 @@ class Error(models.Model):
     @staticmethod
     def hash_for_file_path(file_path):
         return md5(smart_str(file_path)).hexdigest()
+
+    def save(self, *args, **kwargs):
+        self.hashed_file_path = Error.hash_for_file_path(self.file_path)
+        super(Error, self).save(*args, **kwargs)
 
 
 class Event(models.Model):
@@ -121,25 +124,16 @@ class Event(models.Model):
         # entire stack trace.
         path_hash = Error.hash_for_file_path(unique_path)
 
-        #We try to get from the cache first because on the App Engine datastore
-        #we'll get screwed by eventual consistency otherwise
-        CACHE_KEY = "|".join([exception_name, path_hash, str(lineno)])
-        error = cache.get(CACHE_KEY)
-        if error:
-            created = False
-        else:
-            error, created = Error.objects.get_or_create(
-                exception_class_name=exception_name,
-                hashed_file_path=path_hash,
-                line_number=lineno,
-                defaults={
-                    'file_path': path,
-                    'level': level,
-                    'summary': summary
-                }
-            )
-
-            cache.set(CACHE_KEY, error)
+        error, created = Error.objects.get_or_create(
+            exception_class_name=exception_name,
+            hashed_file_path=path_hash,
+            line_number=lineno,
+            defaults={
+                'file_path': path,
+                'level': level,
+                'summary': summary
+            }
+        )
 
         @atomic(xg=True)
         def txn(_error):

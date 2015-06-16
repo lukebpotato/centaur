@@ -6,42 +6,42 @@ Replace this with more appropriate tests for your application.
 """
 
 import mock
+import json
+
 from datetime import timedelta
 from django.utils import timezone
-from django.test import TestCase
+from djangae.test import TestCase, inconsistent_db
+from djangae.db.caching import disable_cache
 from django.test.client import RequestFactory
+from django.contrib.auth import decorators as auth_decorators
+from django.contrib.auth.models import User
 
 from centaur.models import Error, Event
 from centaur.middleware import CentaurMiddleware
+from centaur.views import get_permission_decorator
 
 from djangae.db.transaction import TransactionFailedError
 
 class ErrorTests(TestCase):
-    def test_that_saving_an_error_stores_a_hashed_filename(self):
-        error = Error.objects.create(file_path="bananas", line_number=1)
-        self.assertEqual(Error.hash_for_file_path("bananas"), error.hashed_file_path)
 
-    def test_that_errors_are_cached(self):
+    def test_errors_are_hrd_safe(self):
         middleware = CentaurMiddleware()
-
         request = RequestFactory().get("/")
 
         try:
-            raise TypeError() #Generate an exception with a traceback - genius eh?
+            raise TypeError() #Generate an exception with a traceback
         except TypeError, e:
             exception = e
 
-        self.assertFalse(Error.objects.exists())
-
-        self.assertEqual(0, Event.objects.count())
-        middleware.process_exception(request, exception)
-        self.assertTrue(Error.objects.exists())
-        self.assertEqual(1, Event.objects.count())
-
-        with mock.patch('centaur.models.Error.objects.get_or_create') as get_patch:
+        # Process the same exception 3 times while inconsistent
+        with inconsistent_db():
             middleware.process_exception(request, exception)
-            self.assertFalse(get_patch.called)
-            self.assertEqual(2, Event.objects.count())
+            with disable_cache():
+                middleware.process_exception(request, exception)
+                middleware.process_exception(request, exception)
+
+        self.assertEqual(1, Error.objects.count())
+        self.assertEqual(3, Event.objects.count())
 
 
     def test_transactions_are_retried(self):
@@ -107,3 +107,37 @@ class ErrorTests(TestCase):
         e2 = Error.objects.get(pk=e2.pk)
         self.assertEqual(3, e1.event_count)
         self.assertEqual(2, e2.event_count)
+
+    def test_that_blacklisted_cookies_arent_stored(self):
+        middleware = CentaurMiddleware()
+
+        request = RequestFactory().get("/")
+        request.COOKIES["sessionid"] = "12345"
+        request.COOKIES["bananas"] = "yummy"
+
+        try:
+            raise TypeError() #Generate an exception with a traceback
+        except TypeError, e:
+            exception = e
+
+        middleware.process_exception(request, exception)
+
+        event = Event.objects.get()
+
+        data = json.loads(event.request_json)
+
+        self.assertTrue("bananas" in data["COOKIES"])
+        self.assertFalse("sessionid" in data["COOKIES"])
+
+
+custom_decorator = auth_decorators.user_passes_test(lambda u: u.email.endswith('@example.com'))
+
+
+class ViewsTests(TestCase):
+
+    def test_custom_permission_decorator(self):
+        with self.settings(CENTAUR_PERMISSION_DECORATOR='centaur.tests.custom_decorator'):
+            self.assertEqual(get_permission_decorator(), custom_decorator)
+
+        self.assertNotEqual(get_permission_decorator(), custom_decorator)
+
