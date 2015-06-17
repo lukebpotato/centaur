@@ -111,9 +111,11 @@ class ErrorTests(TestCase):
     def test_that_blacklisted_cookies_arent_stored(self):
         middleware = CentaurMiddleware()
 
-        request = RequestFactory().get("/")
-        request.COOKIES["sessionid"] = "12345"
-        request.COOKIES["bananas"] = "yummy"
+        factory = RequestFactory()
+        factory.cookies["sessionid"] = "12345"
+        factory.cookies["bananas"] = "yummy"
+        factory.cookies["x"] = "test"
+        request = factory.get("/")
 
         try:
             raise TypeError() #Generate an exception with a traceback
@@ -128,6 +130,8 @@ class ErrorTests(TestCase):
 
         self.assertTrue("bananas" in data["COOKIES"])
         self.assertFalse("sessionid" in data["COOKIES"])
+        self.assertTrue("bananas" in data["META"]['HTTP_COOKIE'])
+        self.assertFalse("sessionid" in data["META"]['HTTP_COOKIE'])
 
 
 custom_decorator = auth_decorators.user_passes_test(lambda u: u.email.endswith('@example.com'))
